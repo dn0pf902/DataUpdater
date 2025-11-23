@@ -29,6 +29,8 @@ private:
 	CKKEYBOARD hotkey = {};
 	InputHook* input_manager = nullptr;
 	CKIpionManager* m_IpionManager = nullptr;
+	
+	int frame_cnt = 0;
 public:
 	DataUpdater(IBML* bml) : IMod(bml) {}
 
@@ -42,6 +44,7 @@ public:
 	virtual void OnStartLevel() override;
 	virtual void OnProcess() override;
 	virtual void OnLoad() override;
+	virtual void OnPostLoadLevel() override;
 	virtual void OnLoadScript(const char* filename, CKBehavior* script) override;
 	
 	CK3dEntity* GetActiveBall() const {
