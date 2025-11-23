@@ -6,4 +6,5 @@ IMod* BMLEntry(IBML* bml) {
 
 void DataUpdater::OnStartLevel() {
 	m_bml->SendIngameMessage("test");
+	m_bml->SendIngameMessage("test");
 }
