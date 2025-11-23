@@ -30,4 +30,5 @@ public:
 	DECLARE_BML_VERSION;
 
 	virtual void OnStartLevel() override;
+	virtual void OnProcess() override;
 };

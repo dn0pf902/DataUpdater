@@ -8,3 +8,7 @@ void DataUpdater::OnStartLevel() {
 	m_bml->SendIngameMessage("test");
 	m_bml->SendIngameMessage("test");
 }
+
+void DataUpdater::OnProcess() {
+
+}
