@@ -14,6 +14,8 @@ typedef const char* ICKSTRING;
 typedef CKSTRING ICKSTRING;
 #endif
 
+#include "physics_RT.h"
+
 extern "C" {
 	__declspec(dllexport) IMod* BMLEntry(IBML* bml);
 }
@@ -22,6 +24,7 @@ class DataUpdater : public IMod {
 private:
 	bool enabled = false;
 	CKParameter* m_ActiveBall = nullptr;
+	IProperty* prop_enabled = nullptr;
 public:
 	DataUpdater(IBML* bml) : IMod(bml) {}
 
@@ -34,5 +37,6 @@ public:
 
 	virtual void OnStartLevel() override;
 	virtual void OnProcess() override;
+	virtual void OnLoad() override;
 	virtual void OnLoadScript(const char* filename, CKBehavior* script) override;
 };
