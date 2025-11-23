@@ -25,6 +25,10 @@ private:
 	bool enabled = false;
 	CKParameter* m_ActiveBall = nullptr;
 	IProperty* prop_enabled = nullptr;
+	IProperty* prop_key = nullptr;
+	CKKEYBOARD hotkey = {};
+	InputHook* input_manager = nullptr;
+	CKIpionManager* m_IpionManager = nullptr;
 public:
 	DataUpdater(IBML* bml) : IMod(bml) {}
 
@@ -39,4 +43,32 @@ public:
 	virtual void OnProcess() override;
 	virtual void OnLoad() override;
 	virtual void OnLoadScript(const char* filename, CKBehavior* script) override;
+	
+	CK3dEntity* GetActiveBall() const {
+		if (m_ActiveBall)
+			return (CK3dEntity*)m_ActiveBall->GetValueObject();
+		return nullptr;
+	}
+
+	VxVector get_ball_vel() {
+		auto* ball = GetActiveBall();
+		if (!ball) return VxVector(-1, -1, -1);
+		VxVector vel{}, angular_vel{};
+		auto* obj = m_IpionManager->GetPhysicsObject(ball);
+		if (obj) {
+			obj->GetVelocity(&vel, &angular_vel);
+		}
+		return vel;
+	}
+
+	VxVector get_ball_pos() {
+		auto* ball = GetActiveBall();
+		if (!ball) return VxVector(-1, -1, -1);
+		VxVector pos{}, angles{};
+		auto* obj = m_IpionManager->GetPhysicsObject(ball);
+		if (obj) {
+			obj->GetPosition(&pos, &angles);
+		}
+		return pos;
+	}
 };
