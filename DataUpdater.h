@@ -19,6 +19,9 @@ extern "C" {
 }
 
 class DataUpdater : public IMod {
+private:
+	bool enabled = false;
+	CKParameter* m_ActiveBall = nullptr;
 public:
 	DataUpdater(IBML* bml) : IMod(bml) {}
 
@@ -31,4 +34,5 @@ public:
 
 	virtual void OnStartLevel() override;
 	virtual void OnProcess() override;
+	virtual void OnLoadScript(const char* filename, CKBehavior* script) override;
 };
