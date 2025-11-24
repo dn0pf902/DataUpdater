@@ -1,5 +1,7 @@
 #include "DataUpdater.h"
 
+#include <BML/Bui.h>
+
 IMod* BMLEntry(IBML* bml) {
 	return new DataUpdater(bml);
 }
@@ -74,4 +76,6 @@ void DataUpdater::OnProcess() {
 		std::snprintf(buf, sizeof(buf), "ball_vel=%.3f, %.3f, %.3f", vel.x, vel.y, vel.z);
 		m_bml->SendIngameMessage(buf);
 	}
+
+	OnPrintData();
 }

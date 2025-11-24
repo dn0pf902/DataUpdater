@@ -16,12 +16,15 @@ typedef CKSTRING ICKSTRING;
 
 #include "physics_RT.h"
 
+#include <memory>
+
 extern "C" {
 	__declspec(dllexport) IMod* BMLEntry(IBML* bml);
 }
 
 class DataUpdater : public IMod {
 private:
+	std::unique_ptr<BGui::Text> sprite;
 	bool enabled = false;
 	CKParameter* m_ActiveBall = nullptr;
 	IProperty* prop_enabled = nullptr;
@@ -49,6 +52,22 @@ public:
 	virtual void OnBallNavActive() override;
 	virtual void OnPreLoadLevel() override;
 	
+	void OnPrintData() {
+		if (!sprite) {
+			sprite = std::make_unique<decltype(sprite)::element_type>("DataDisplay");
+			sprite->SetSize({ 0.6f, 0.12f });
+			sprite->SetPosition({ 0.2f, 0.9f });
+			sprite->SetAlignment(CKSPRITETEXT_CENTER);
+			sprite->SetTextColor(0xffffffff);
+			sprite->SetZOrder(128);
+			sprite->SetFont("Arial", 20, 400, false, false);
+		}
+
+		char txt[128];
+		std::snprintf(txt, sizeof(txt), "frame cnt = %d", frame_cnt);
+		sprite->SetText(txt);
+	}
+
 	CK3dEntity* GetActiveBall() const {
 		if (m_ActiveBall)
 			return (CK3dEntity*)m_ActiveBall->GetValueObject();
