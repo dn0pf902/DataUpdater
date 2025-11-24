@@ -24,6 +24,7 @@ extern "C" {
 
 class DataUpdater : public IMod {
 private:
+	std::unique_ptr<BGui::Panel> bg;
 	std::unique_ptr<BGui::Text> sprite;
 	bool enabled = false;
 	CKParameter* m_ActiveBall = nullptr;
@@ -53,6 +54,14 @@ public:
 	virtual void OnPreLoadLevel() override;
 	
 	void OnPrintData() {
+		if (!bg) {
+			bg = std::make_unique<decltype(bg)::element_type>("DataBackground");
+			bg->SetSize({ 0.6f, 0.12f });
+			bg->SetPosition({ 0.2f, 0.9f });
+			bg->SetZOrder(127);
+			bg->SetColor({ 0, 0, 0, 175 });
+		}
+
 		if (!sprite) {
 			sprite = std::make_unique<decltype(sprite)::element_type>("DataDisplay");
 			sprite->SetSize({ 0.6f, 0.12f });
@@ -60,7 +69,7 @@ public:
 			sprite->SetAlignment(CKSPRITETEXT_CENTER);
 			sprite->SetTextColor(0xffffffff);
 			sprite->SetZOrder(128);
-			sprite->SetFont("Arial", 20, 400, false, false);
+			sprite->SetFont("Consolas", 20, 400, false, false);
 		}
 
 		char txt[128];
