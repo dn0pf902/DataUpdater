@@ -26,12 +26,22 @@ void DataUpdater::OnLoad() {
 	m_IpionManager = (CKIpionManager*)m_BML->GetCKContext()->GetManagerByGuid(CKGUID(0x6bed328b, 0x141f5148));
 }
 
-void DataUpdater::OnStartLevel() {
-	//frame_cnt = 102;
+void DataUpdater::OnPostLoadLevel() {
+
 }
 
-void DataUpdater::OnPostLoadLevel() {
-	frame_cnt = 101;
+void DataUpdater::OnStartLevel() {
+
+}
+
+void DataUpdater::OnPreLoadLevel() {
+	frame_cnt = -2;
+}
+
+void DataUpdater::OnBallNavActive() {
+	/*char buf[128];
+	std::snprintf(buf, sizeof(buf), "BallNav activated at framecnt=%d", frame_cnt);
+	m_bml->SendIngameMessage(buf);*/
 }
 
 void DataUpdater::OnLoadScript(const char* filename, CKBehavior* script) {

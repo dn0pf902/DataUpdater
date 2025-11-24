@@ -46,6 +46,8 @@ public:
 	virtual void OnLoad() override;
 	virtual void OnPostLoadLevel() override;
 	virtual void OnLoadScript(const char* filename, CKBehavior* script) override;
+	virtual void OnBallNavActive() override;
+	virtual void OnPreLoadLevel() override;
 	
 	CK3dEntity* GetActiveBall() const {
 		if (m_ActiveBall)
