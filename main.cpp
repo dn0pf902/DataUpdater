@@ -7,6 +7,8 @@ IMod* BMLEntry(IBML* bml) {
 }
 
 void DataUpdater::OnLoad() {
+	m_bml->RegisterCommand(new CommandDatupd(this));
+
 	GetConfig()->SetCategoryComment("General", "General settings");
 
 	prop_enabled = GetConfig()->GetProperty("General", "Enabled");

@@ -23,6 +23,83 @@ extern "C" {
 }
 
 class DataUpdater : public IMod {
+	class CommandDatupd : public ICommand {
+	private:
+		DataUpdater* m_mod;
+	public:
+		virtual std::string GetName() override { return "dataupdater"; };
+		virtual std::string GetAlias() override { return "datupd"; };
+		virtual std::string GetDescription() override { return "Commands of DataUpdater."; };
+		virtual bool IsCheat() override { return false; };
+		CommandDatupd(DataUpdater* mod) : m_mod(mod) {}
+
+		virtual void Execute(IBML* bml, const std::vector<std::string>& args) override {
+			//m_mod->Execute(args); // 需要调用mod内成员时使用
+			if (args.size() <= 1 || args[1] == "help" || args[1] == "h") {
+				bml->SendIngameMessage("/datupd back/b : recover data to preserved data");
+				bml->SendIngameMessage("/datupd clear/c : clear data");
+				return;
+			}
+			if (args[1] == "back" || args[1] == "b") {
+				return m_mod->Execute(args);
+			}
+			if (args[1] == "clear" || args[1] == "c") {
+				return m_mod->Execute(args);
+			}
+		}
+		virtual const std::vector<std::string> GetTabCompletion(IBML* bml, const std::vector<std::string>& args) override {
+			return args.size() == 2 ? std::vector<std::string>{"help", "back", "clear" } : std::vector<std::string>{};
+		};
+	};
+	void Execute(const std::vector<std::string>& args) {
+		if (args[1] == "back" || args[1] == "b") {
+			std::string s = preserved_data;
+			int frame = 0;
+			std::string dir;
+			float pos = 0.0f, vel = 0.0f;
+
+			size_t p1 = s.find(':');
+			size_t p_pos = s.find(",pos=");
+			size_t p_vel = s.find(",vel=");
+			if (p1 != std::string::npos && p_pos != std::string::npos && p_vel != std::string::npos) {
+				frame = std::stoi(s.substr(1, p1 - 1));
+				dir = s.substr(p1 + 1, p_pos - (p1 + 1));
+				pos = std::stof(s.substr(p_pos + 5, p_vel - (p_pos + 5)));
+				vel = std::stof(s.substr(p_vel + 5));
+				data_direction = dir;
+				data_pos = pos;
+				data_vel = vel;
+				frame_of_data = frame;
+				prop_data_direction->SetString(data_direction.c_str());
+				prop_data_pos->SetFloat(data_pos);
+				prop_data_vel->SetFloat(data_vel);
+				prop_frame_of_data->SetInteger(frame_of_data);
+				
+				char buf[128];
+				std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_of_data, data_direction.c_str(), data_pos, data_vel);
+				sprite_data->SetText(buf);
+			}
+			else {
+				m_bml->SendIngameMessage("DataUpdater: Failed to parse preserved data.");
+			}
+			return;
+		}
+		if (args[1] == "clear" || args[1] == "c") {
+			data_direction = "+x";
+			data_pos = 0.0f;
+			data_vel = 0.0f;
+			frame_of_data = 0;
+			prop_data_direction->SetString(data_direction.c_str());
+			prop_data_pos->SetFloat(data_pos);
+			prop_data_vel->SetFloat(data_vel);
+			prop_frame_of_data->SetInteger(frame_of_data);
+
+			char buf[128];
+			std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_of_data, data_direction.c_str(), data_pos, data_vel);
+			sprite_data->SetText(buf);
+			return;
+		}
+	}
 private:
 	std::unique_ptr<BGui::Panel> bg;
 	std::unique_ptr<BGui::Text> sprite_data, sprite_cur_data;
