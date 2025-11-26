@@ -69,7 +69,7 @@ public:
 	
 	void ShowData();
 	void HideData();
-	bool cmp(int frame, VxVector cur_pos, VxVector cur_vel);
+	bool cmp(VxVector cur_pos, VxVector cur_vel) const;
 	void update_data(int frame, VxVector cur_pos, VxVector cur_vel);
 
 	CK3dEntity* GetActiveBall() const {

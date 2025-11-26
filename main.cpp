@@ -55,7 +55,7 @@ void DataUpdater::OnLoad() {
 
 	prop_preserved_data = GetConfig()->GetProperty("Data", "PreservedData");
 	prop_preserved_data->SetDefaultString("#0:+x,pos=0.000,vel=0.000");
-	prop_preserved_data->SetComment("Preserved data string(can be updated by using \"/datupd upd p\")");
+	prop_preserved_data->SetComment("Preserved data string(can be updated back to current best data by using \"/datupd upd p\")");
 	preserved_data = prop_preserved_data->GetString();
 
 	GetConfig()->SetCategoryComment("CompareRule", "Comparison rules for data.\n(if current_pos>pos or (current_pos>pos-[DeltaPosition] and current_vel>vel+[DeltaVelocity]) then update)");
@@ -136,7 +136,7 @@ void DataUpdater::HideData() {
 	}
 }
 
-bool DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) {
+bool DataUpdater::cmp(VxVector cur_pos, VxVector cur_vel) const {
 	float cur_value = 0.0f;
 	float data_value = 0.0f;
 	if (update_direction == "+x") {
@@ -171,6 +171,7 @@ bool DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) {
 	}
 	else if (cur_value > data_value - dlt_pos) {
 		float cur_vel_value = 0.0f;
+		float data_vel_value = 0.0f;
 		if (update_direction == "+x" || update_direction == "-x") {
 			cur_vel_value = cur_vel.x;
 		}
@@ -180,7 +181,13 @@ bool DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) {
 		else if (update_direction == "+z" || update_direction == "-z") {
 			cur_vel_value = cur_vel.z;
 		}
-		if (cur_vel_value > data_vel + dlt_vel) {
+		if (update_direction == "+x" || update_direction == "+y" || update_direction == "+z") {
+			data_vel_value = data_vel;
+		}
+		else {
+			data_vel_value = -data_vel;
+		}
+		if (cur_vel_value > data_vel_value + dlt_vel) {
 			return true;
 		}
 	}
@@ -188,24 +195,20 @@ bool DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) {
 }
 
 void DataUpdater::update_data(int frame, VxVector cur_pos, VxVector cur_vel) {
+	char buf[128];
+	std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_of_data, update_direction.c_str(), data_pos, data_vel);
+	preserved_data = buf;
+	prop_preserved_data->SetString(preserved_data.c_str());
+
 	float cur_value = 0.0f;
-	if (update_direction == "+x") {
+	if (update_direction == "+x" || update_direction == "-x") {
 		cur_value = cur_pos.x;
 	}
-	else if (update_direction == "-x") {
-		cur_value = -cur_pos.x;
-	}
-	else if (update_direction == "+y") {
+	else if (update_direction == "+y" || update_direction == "-y") {
 		cur_value = cur_pos.y;
 	}
-	else if (update_direction == "-y") {
-		cur_value = -cur_pos.y;
-	}
-	else if (update_direction == "+z") {
+	else if (update_direction == "+z" || update_direction == "-z") {
 		cur_value = cur_pos.z;
-	}
-	else if (update_direction == "-z") {
-		cur_value = -cur_pos.z;
 	}
 	else {
 		return;
@@ -225,10 +228,6 @@ void DataUpdater::update_data(int frame, VxVector cur_pos, VxVector cur_vel) {
 	prop_data_pos->SetFloat(data_pos);
 	prop_data_vel->SetFloat(data_vel);
 	prop_frame_of_data->SetInteger(frame_of_data);
-	char buf[128];
-	std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_of_data, update_direction.c_str(), data_pos, data_vel);
-	preserved_data = buf;
-	prop_preserved_data->SetString(preserved_data.c_str());
 }
 
 void DataUpdater::OnProcess() {
@@ -252,7 +251,7 @@ void DataUpdater::OnProcess() {
 		std::snprintf(txt, sizeof(txt), "frame cnt = %d", frame_cnt);
 		sprite->SetText(txt);
 
-		if (cmp(frame_cnt, pos, vel)) {
+		if (cmp(pos, vel)) {
 			update_data(frame_cnt, pos, vel);
 		}
 		else {
