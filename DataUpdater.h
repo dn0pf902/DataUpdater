@@ -27,14 +27,18 @@ private:
 	std::unique_ptr<BGui::Panel> bg;
 	std::unique_ptr<BGui::Text> sprite;
 	bool enabled = false;
+	bool hotkey_enabled = false;
 	CKParameter* m_ActiveBall = nullptr;
 	IProperty* prop_enabled = nullptr;
-	IProperty* prop_key = nullptr;
+	IProperty* prop_hotkey = nullptr;
+	IProperty* prop_hotkey_enabled = nullptr;
+	IProperty* prop_update_frame = nullptr;
 	CKKEYBOARD hotkey = {};
 	InputHook* input_manager = nullptr;
 	CKIpionManager* m_IpionManager = nullptr;
 	
 	int frame_cnt = 0;
+	int update_frame = 0;
 public:
 	DataUpdater(IBML* bml) : IMod(bml) {}
 
@@ -50,32 +54,9 @@ public:
 	virtual void OnLoad() override;
 	virtual void OnPostLoadLevel() override;
 	virtual void OnLoadScript(const char* filename, CKBehavior* script) override;
-	virtual void OnBallNavActive() override;
 	virtual void OnPreLoadLevel() override;
 	
-	void OnPrintData() {
-		if (!bg) {
-			bg = std::make_unique<decltype(bg)::element_type>("DataBackground");
-			bg->SetSize({ 0.6f, 0.12f });
-			bg->SetPosition({ 0.2f, 0.9f });
-			bg->SetZOrder(127);
-			bg->SetColor({ 0, 0, 0, 175 });
-		}
-
-		if (!sprite) {
-			sprite = std::make_unique<decltype(sprite)::element_type>("DataDisplay");
-			sprite->SetSize({ 0.6f, 0.12f });
-			sprite->SetPosition({ 0.2f, 0.9f });
-			sprite->SetAlignment(CKSPRITETEXT_CENTER);
-			sprite->SetTextColor(0xffffffff);
-			sprite->SetZOrder(128);
-			sprite->SetFont("Consolas", 20, 400, false, false);
-		}
-
-		char txt[128];
-		std::snprintf(txt, sizeof(txt), "frame cnt = %d", frame_cnt);
-		sprite->SetText(txt);
-	}
+	void OnPrintData();
 
 	CK3dEntity* GetActiveBall() const {
 		if (m_ActiveBall)
