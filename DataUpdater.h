@@ -33,12 +33,22 @@ private:
 	IProperty* prop_hotkey = nullptr;
 	IProperty* prop_hotkey_enabled = nullptr;
 	IProperty* prop_update_frame = nullptr;
+	IProperty* prop_update_direction = nullptr;
+	IProperty* prop_frame_of_data = nullptr;
+	IProperty* prop_data_pos = nullptr, * prop_data_vel = nullptr;
+	IProperty* prop_preserved_data = nullptr;
+	IProperty* prop_dlt_vel = nullptr, * prop_dlt_pos = nullptr;
 	CKKEYBOARD hotkey = {};
 	InputHook* input_manager = nullptr;
 	CKIpionManager* m_IpionManager = nullptr;
 	
 	int frame_cnt = 0;
 	int update_frame = 0;
+	int frame_of_data = 0;
+	std::string update_direction = "";
+	std::string preserved_data = "";
+	float data_pos = 0.0f, data_vel = 0.0f;
+	float dlt_pos = 0.1f, dlt_vel = 0.1f;
 public:
 	DataUpdater(IBML* bml) : IMod(bml) {}
 
@@ -55,8 +65,12 @@ public:
 	virtual void OnPostLoadLevel() override;
 	virtual void OnLoadScript(const char* filename, CKBehavior* script) override;
 	virtual void OnPreLoadLevel() override;
+	virtual void OnPreExitLevel() override;
 	
-	void OnPrintData();
+	void ShowData();
+	void HideData();
+	bool cmp(int frame, VxVector cur_pos, VxVector cur_vel);
+	void update_data(int frame, VxVector cur_pos, VxVector cur_vel);
 
 	CK3dEntity* GetActiveBall() const {
 		if (m_ActiveBall)
