@@ -34,6 +34,7 @@ private:
 	IProperty* prop_hotkey_enabled = nullptr;
 	IProperty* prop_update_frame = nullptr;
 	IProperty* prop_update_direction = nullptr;
+	IProperty* prop_data_direction = nullptr;
 	IProperty* prop_frame_of_data = nullptr;
 	IProperty* prop_data_pos = nullptr, * prop_data_vel = nullptr;
 	IProperty* prop_preserved_data = nullptr;
@@ -54,6 +55,7 @@ private:
 	int update_frame = 0;
 	int frame_of_data = 0;
 	std::string update_direction = "";
+	std::string data_direction = "";
 	std::string preserved_data = "";
 	float data_pos = 0.0f, data_vel = 0.0f;
 	float dlt_pos = 0.1f, dlt_vel = 0.1f;
@@ -77,7 +79,7 @@ public:
 	
 	void ShowData();
 	void HideData();
-	bool cmp(VxVector cur_pos, VxVector cur_vel) const;
+	int cmp(int frame, VxVector cur_pos, VxVector cur_vel) const;
 	void update_data(int frame, VxVector cur_pos, VxVector cur_vel);
 
 	CK3dEntity* GetActiveBall() const {

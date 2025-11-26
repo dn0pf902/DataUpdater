@@ -38,6 +38,11 @@ void DataUpdater::OnLoad() {
 	prop_update_direction->SetComment("Direction to update data (+x, -x, +y, -y, +z, -z)");
 	update_direction = prop_update_direction->GetString();
 
+	prop_data_direction = GetConfig()->GetProperty("Data", "DataDirection");
+	prop_data_direction->SetDefaultString("+x");
+	prop_data_direction->SetComment("Direction of the stored data (+x, -x, +y, -y, +z, -z)");
+	data_direction = prop_data_direction->GetString();
+
 	prop_frame_of_data = GetConfig()->GetProperty("Data", "FrameOfData");
 	prop_frame_of_data->SetDefaultInteger(0);
 	prop_frame_of_data->SetComment("Frame number of the stored data");
@@ -185,7 +190,13 @@ void DataUpdater::HideData() {
 	}
 }
 
-bool DataUpdater::cmp(VxVector cur_pos, VxVector cur_vel) const {
+int DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) const {
+	if (frame_of_data == 0) {
+		return 1;
+	}
+	if (frame != frame_of_data || update_direction != data_direction) {
+		return -1;
+	}
 	float cur_value = 0.0f;
 	float data_value = 0.0f;
 	if (update_direction == "+x") {
@@ -213,10 +224,10 @@ bool DataUpdater::cmp(VxVector cur_pos, VxVector cur_vel) const {
 		data_value = -data_pos;
 	}
 	else {
-		return false;
+		return -1;
 	}
 	if (cur_value > data_value) {
-		return true;
+		return 1;
 	}
 	else if (cur_value > data_value - dlt_pos) {
 		float cur_vel_value = 0.0f;
@@ -237,10 +248,10 @@ bool DataUpdater::cmp(VxVector cur_pos, VxVector cur_vel) const {
 			data_vel_value = -data_vel;
 		}
 		if (cur_vel_value > data_vel_value + dlt_vel) {
-			return true;
+			return 1;
 		}
 	}
-	return false;
+	return 0;
 }
 
 void DataUpdater::update_data(int frame, VxVector cur_pos, VxVector cur_vel) {
@@ -274,9 +285,11 @@ void DataUpdater::update_data(int frame, VxVector cur_pos, VxVector cur_vel) {
 		data_vel = cur_vel.z;
 	}
 	frame_of_data = frame;
+	data_direction = update_direction;
 	prop_data_pos->SetFloat(data_pos);
 	prop_data_vel->SetFloat(data_vel);
 	prop_frame_of_data->SetInteger(frame_of_data);
+	prop_data_direction->SetString(data_direction.c_str());
 }
 
 void DataUpdater::OnProcess() {
@@ -301,8 +314,16 @@ void DataUpdater::OnProcess() {
 			curpos = pos.z;
 			curvel = vel.z;
 		}
-
-		if (cmp(pos, vel)) {
+		
+		auto result = cmp(frame_cnt, pos, vel);
+		if (result == -1) {
+			sprite_cur_data->SetTextColor(0xffffff00);
+			char buf[128];
+			std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_cnt, update_direction.c_str(), curpos, curvel);
+			sprite_cur_data->SetText(buf);
+			m_bml->SendIngameMessage("DataUpdater: Frame or Direction mismatch, cannot update data. Use /datupd clear to clear stored data.");
+		}
+		else if (result == 1) {
 			sprite_cur_data->SetTextColor(0xff00ff00);
 			char buf[128];
 			std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_cnt, update_direction.c_str(), curpos, curvel);
