@@ -58,7 +58,7 @@ void DataUpdater::OnLoad() {
 	prop_preserved_data->SetComment("Preserved data string(can be updated back to current best data by using \"/datupd upd p\")");
 	preserved_data = prop_preserved_data->GetString();
 
-	GetConfig()->SetCategoryComment("CompareRule", "Comparison rules for data.\n(if current_pos>pos or (current_pos>pos-[DeltaPosition] and current_vel>vel+[DeltaVelocity]) then update)");
+	GetConfig()->SetCategoryComment("CompareRule", "Comparison rules for data.(if current_pos>pos or (current_pos>pos-[DeltaPosition] and current_vel>vel+[DeltaVelocity]) then update)");
 
 	prop_dlt_pos = GetConfig()->GetProperty("CompareRule", "DeltaPosition");
 	prop_dlt_pos->SetDefaultFloat(0.1f);
@@ -70,6 +70,38 @@ void DataUpdater::OnLoad() {
 	prop_dlt_vel->SetComment("Allowed delta for velocity comparison(default:1.0)");
 	dlt_vel = prop_dlt_vel->GetFloat();
 
+	GetConfig()->SetCategoryComment("UI", "UI Settings");
+	
+	prop_UI_posx = GetConfig()->GetProperty("UI", "UIPosX");
+	prop_UI_posx->SetDefaultFloat(0.6f);
+	prop_UI_posx->SetComment("UI Position X (0.0 - 1.0)");
+	UI_posx = prop_UI_posx->GetFloat();
+
+	prop_UI_posy = GetConfig()->GetProperty("UI", "UIPosY");
+	prop_UI_posy->SetDefaultFloat(0.0f);
+	prop_UI_posy->SetComment("UI Position Y (0.0 - 1.0)");
+	UI_posy = prop_UI_posy->GetFloat();
+
+	prop_UI_font = GetConfig()->GetProperty("UI", "UIFont");
+	prop_UI_font->SetDefaultString("Consolas");
+	prop_UI_font->SetComment("UI Font Name");
+	UI_font = prop_UI_font->GetString();
+
+	prop_UI_font_size = GetConfig()->GetProperty("UI", "UIFontSize");
+	prop_UI_font_size->SetDefaultInteger(18);
+	prop_UI_font_size->SetComment("UI Font Size");
+	UI_font_size = prop_UI_font_size->GetInteger();
+
+	prop_UI_sizex = GetConfig()->GetProperty("UI", "UISizeX");
+	prop_UI_sizex->SetDefaultFloat(0.4f);
+	prop_UI_sizex->SetComment("UI Size X (0.0 - 1.0)");
+	UI_sizex = prop_UI_sizex->GetFloat();
+
+	prop_UI_sizey = GetConfig()->GetProperty("UI", "UISizeY");
+	prop_UI_sizey->SetDefaultFloat(0.06f);
+	prop_UI_sizey->SetComment("UI Size Y (0.0 - 1.0)");
+	UI_sizey = prop_UI_sizey->GetFloat();
+	
 	//other initializations
 	input_manager = m_bml->GetInputManager();
 
@@ -110,20 +142,34 @@ void DataUpdater::OnLoadScript(const char* filename, CKBehavior* script) {
 void DataUpdater::ShowData() {
 	if (!bg) {
 		bg = std::make_unique<decltype(bg)::element_type>("DataBackground");
-		bg->SetSize({ 0.6f, 0.12f });
-		bg->SetPosition({ 0.2f, 0.9f });
+		bg->SetSize({ UI_sizex, UI_sizey });
+		bg->SetPosition({ UI_posx, UI_posy });
 		bg->SetZOrder(127);
 		bg->SetColor({ 0, 0, 0, 175 });
 	}
 
-	if (!sprite) {
-		sprite = std::make_unique<decltype(sprite)::element_type>("DataDisplay");
-		sprite->SetSize({ 0.6f, 0.12f });
-		sprite->SetPosition({ 0.2f, 0.9f });
-		sprite->SetAlignment(CKSPRITETEXT_CENTER);
-		sprite->SetTextColor(0xffffffff);
-		sprite->SetZOrder(128);
-		sprite->SetFont("Consolas", 18, 400, false, false);
+	if (!sprite_data) {
+		sprite_data = std::make_unique<decltype(sprite_data)::element_type>("DataDisplay");
+		sprite_data->SetSize({ UI_sizex, UI_sizey });
+		sprite_data->SetPosition({ UI_posx, UI_posy });
+		sprite_data->SetAlignment(CKSPRITETEXT_CENTER);
+		sprite_data->SetTextColor(0xffffffff);
+		sprite_data->SetZOrder(128);
+		sprite_data->SetFont(UI_font.c_str(), UI_font_size, 400, false, false);
+
+		char buf[128];
+		std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_of_data, update_direction.c_str(), data_pos, data_vel);
+		sprite_data->SetText(buf);
+	}
+
+	if (!sprite_cur_data) {
+		sprite_cur_data = std::make_unique<decltype(sprite_cur_data)::element_type>("CurrentDataDisplay");
+		sprite_cur_data->SetSize({ UI_sizex, UI_sizey });
+		sprite_cur_data->SetPosition({ UI_posx, UI_posy + ITEM_Y_SHIFT });
+		sprite_cur_data->SetAlignment(CKSPRITETEXT_CENTER);
+		sprite_cur_data->SetTextColor(0xffffffff);
+		sprite_cur_data->SetZOrder(128);
+		sprite_cur_data->SetFont(UI_font.c_str(), UI_font_size, 400, false, false);
 	}
 }
 
@@ -131,8 +177,11 @@ void DataUpdater::HideData() {
 	if (bg) {
 		bg.reset();
 	}
-	if (sprite) {
-		sprite.reset();
+	if (sprite_data) {
+		sprite_data.reset();
+	}
+	if (sprite_cur_data) {
+		sprite_cur_data.reset();
 	}
 }
 
@@ -238,24 +287,33 @@ void DataUpdater::OnProcess() {
 	if ((hotkey_enabled && input_manager->IsKeyPressed(hotkey)) || (update_frame != 0 && frame_cnt == update_frame)) {
 		auto pos = get_ball_pos();
 		auto vel = get_ball_vel();
-
-		char buf[128];
-		std::snprintf(buf, sizeof(buf), "framecnt=%d", frame_cnt);
-		m_bml->SendIngameMessage(buf);
-		std::snprintf(buf, sizeof(buf), "ball_pos=%.3f, %.3f, %.3f", pos.x, pos.y, pos.z);
-		m_bml->SendIngameMessage(buf);
-		std::snprintf(buf, sizeof(buf), "ball_vel=%.3f, %.3f, %.3f", vel.x, vel.y, vel.z);
-		m_bml->SendIngameMessage(buf);
 		
-		char txt[128];
-		std::snprintf(txt, sizeof(txt), "frame cnt = %d", frame_cnt);
-		sprite->SetText(txt);
+		float curpos = 0.0f, curvel = 0.0f;
+		if (update_direction == "+x" || update_direction == "-x") {
+			curpos = pos.x;
+			curvel = vel.x;
+		}
+		else if (update_direction == "+y" || update_direction == "-y") {
+			curpos = pos.y;
+			curvel = vel.y;
+		}
+		else if (update_direction == "+z" || update_direction == "-z") {
+			curpos = pos.z;
+			curvel = vel.z;
+		}
 
 		if (cmp(pos, vel)) {
+			sprite_cur_data->SetTextColor(0xff00ff00);
+			char buf[128];
+			std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_cnt, update_direction.c_str(), curpos, curvel);
+			sprite_cur_data->SetText(buf);
 			update_data(frame_cnt, pos, vel);
 		}
 		else {
-
+			sprite_cur_data->SetTextColor(0xffff0000);
+			char buf[128];
+			std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_cnt, update_direction.c_str(), curpos, curvel);
+			sprite_cur_data->SetText(buf);
 		}
 	}
 

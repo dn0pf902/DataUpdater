@@ -2,8 +2,8 @@
   main.cpp
     正在创建库 D:\dn0pf902\codes\cppfiles\1\ModMaking\blc_BMLP_TAS\ModLoader\Mods\DataUpdater.lib 和对象 D:\dn0pf902\codes\cppfiles\1\ModMaking\blc_BMLP_TAS\ModLoader\Mods\DataUpdater.exp
   正在生成代码
+  4 of 186 functions ( 2.2%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    2 functions had inline decision re-evaluated but remain unchanged
   已完成代码的生成
-  4 of 184 functions ( 2.2%) were compiled, the rest were copied from previous compilation.
-    1 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
   DataUpdater.vcxproj -> D:\dn0pf902\codes\cppfiles\1\ModMaking\blc_BMLP_TAS\ModLoader\Mods\DataUpdater.bmodp

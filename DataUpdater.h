@@ -25,7 +25,7 @@ extern "C" {
 class DataUpdater : public IMod {
 private:
 	std::unique_ptr<BGui::Panel> bg;
-	std::unique_ptr<BGui::Text> sprite;
+	std::unique_ptr<BGui::Text> sprite_data, sprite_cur_data;
 	bool enabled = false;
 	bool hotkey_enabled = false;
 	CKParameter* m_ActiveBall = nullptr;
@@ -38,10 +38,18 @@ private:
 	IProperty* prop_data_pos = nullptr, * prop_data_vel = nullptr;
 	IProperty* prop_preserved_data = nullptr;
 	IProperty* prop_dlt_vel = nullptr, * prop_dlt_pos = nullptr;
+	IProperty* prop_UI_posx = nullptr, * prop_UI_posy = nullptr, * prop_UI_font = nullptr, * prop_UI_font_size = nullptr;
+	IProperty* prop_UI_sizex = nullptr, * prop_UI_sizey = nullptr;
 	CKKEYBOARD hotkey = {};
 	InputHook* input_manager = nullptr;
 	CKIpionManager* m_IpionManager = nullptr;
 	
+	const float ITEM_Y_SHIFT = 0.03f;
+	float UI_posx = 0.2f, UI_posy = 0.9f;
+	float UI_sizex = 0.6f, UI_sizey = 0.12f;
+	std::string UI_font = "Consolas";
+	int UI_font_size = 18;
+
 	int frame_cnt = 0;
 	int update_frame = 0;
 	int frame_of_data = 0;
