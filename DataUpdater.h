@@ -18,6 +18,7 @@ typedef CKSTRING ICKSTRING;
 
 #include <memory>
 #include <fstream>
+#include <filesystem>
 
 #define BML_TAS_PATH "..\\ModLoader\\TASRecords\\"
 

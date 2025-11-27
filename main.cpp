@@ -237,17 +237,27 @@ void DataUpdater::SaveFile() {
 		m_BML->SendIngameMessage(("DataUpdater: TAS file " + tas_filename + ".tas " "not found, automatic saving aborted.").c_str());
 		return;
 	}
-	std::string target_path = save_path + "#" + std::to_string(frame_of_data) + " " + data_direction + "\\";
-	bool flag = CreateDirectory(target_path.c_str(), NULL);
-	if (!flag) {
-		m_bml->SendIngameMessage(("DataUpdater: Failed to create directory " + target_path + ", automatic saving aborted.").c_str());
+	namespace fs = std::filesystem;
+	fs::path target_dir = fs::path(save_path) / ("#" + std::to_string(frame_of_data) + " " + data_direction);
+
+	std::error_code ec;
+	if (!fs::create_directories(target_dir, ec)) {
+		if (ec) {
+			m_bml->SendIngameMessage(("DataUpdater: Failed to create directory " + target_dir.string() + " (err=" + std::to_string(ec.value()) + "), automatic saving aborted.").c_str());
+			return;
+		}
 	}
+
 	char buf[128];
 	std::snprintf(buf, sizeof(buf), "%c=%.3f,v%c=%.3f", data_direction.at(1), data_pos, data_direction.at(1), data_vel);
 	std::string data_str(buf);
-	std::string full_target_path = target_path + tas_filename + " " + data_str + ".tas";
-	CopyFile(tas_path.c_str(), full_target_path.c_str(), FALSE);
-	m_bml->SendIngameMessage(("DataUpdater: Saved TAS file to " + target_path).c_str());
+	fs::path full_target_path = target_dir / (tas_filename + " " + data_str + ".tas");
+
+	if (!CopyFile(tas_path.c_str(), full_target_path.string().c_str(), FALSE)) {
+		m_bml->SendIngameMessage(("DataUpdater: Failed to copy TAS to " + full_target_path.string()).c_str());
+		return;
+	}
+	m_bml->SendIngameMessage(("DataUpdater: Saved TAS file to " + target_dir.string()).c_str());
 }
 
 void DataUpdater::AutoSaveFile() {
