@@ -45,11 +45,25 @@ void DataUpdater::OnLoad() {
 	prop_update_direction->SetDefaultString("+x");
 	prop_update_direction->SetComment("Direction to update data (+x, -x, +y, -y, +z, -z)");
 	update_direction = prop_update_direction->GetString();
+	if (update_direction != "+x" && update_direction != "-x" &&
+		update_direction != "+y" && update_direction != "-y" &&
+		update_direction != "+z" && update_direction != "-z") {
+		m_bml->SendIngameMessage("DataUpdater: Invalid UpdateDirection in config, resetting to +x.");
+		update_direction = "+x";
+		prop_update_direction->SetString(update_direction.c_str());
+	}
 
 	prop_data_direction = GetConfig()->GetProperty("Data", "DataDirection");
 	prop_data_direction->SetDefaultString("+x");
 	prop_data_direction->SetComment("Direction of the stored data (+x, -x, +y, -y, +z, -z)");
 	data_direction = prop_data_direction->GetString();
+	if (data_direction != "+x" && data_direction != "-x" &&
+		data_direction != "+y" && data_direction != "-y" &&
+		data_direction != "+z" && data_direction != "-z") {
+		m_bml->SendIngameMessage("DataUpdater: Invalid DataDirection in config, resetting to +x.");
+		data_direction = "+x";
+		prop_data_direction->SetString(data_direction.c_str());
+	}
 
 	prop_frame_of_data = GetConfig()->GetProperty("Data", "FrameOfData");
 	prop_frame_of_data->SetDefaultInteger(0);
@@ -114,6 +128,23 @@ void DataUpdater::OnLoad() {
 	prop_UI_sizey->SetDefaultFloat(0.06f);
 	prop_UI_sizey->SetComment("UI Size Y (0.0 - 1.0)");
 	UI_sizey = prop_UI_sizey->GetFloat();
+	
+	GetConfig()->SetCategoryComment("SaveFile", "File saving settings");
+
+	prop_autosave_enabled = GetConfig()->GetProperty("SaveFile", "EnableAutoSave");
+	prop_autosave_enabled->SetDefaultBoolean(false);
+	prop_autosave_enabled->SetComment("Enable automatic file saving when updating data");
+	autosave_enabled = prop_autosave_enabled->GetBoolean();
+
+	prop_tas_name = GetConfig()->GetProperty("SaveFile", "TASFileName");
+	prop_tas_name->SetDefaultString("1");
+	prop_tas_name->SetComment("TAS file name for automatic saving (without extension)");
+	tas_filename = prop_tas_name->GetString();
+
+	prop_save_path = GetConfig()->GetProperty("SaveFile", "SavePath");
+	prop_save_path->SetDefaultString((BML_TAS_PATH + std::string("SavedFile\\")).c_str());
+	prop_save_path->SetComment("Full path to save TAS files");
+	save_path = prop_save_path->GetString();
 	
 	//other initializations
 	input_manager = m_bml->GetInputManager();
@@ -200,9 +231,30 @@ void DataUpdater::HideData() {
 }
 
 void DataUpdater::SaveFile() {
-	char* sourcefile = "../fuck.txt";
-	char* targetfile = "../fucker.txt";
-	CopyFile(sourcefile, targetfile, FALSE);
+	std::string tas_path = BML_TAS_PATH + tas_filename + ".tas";
+	std::ifstream file(tas_path.c_str());
+	if (!file.good()) {
+		m_BML->SendIngameMessage(("DataUpdater: TAS file " + tas_filename + ".tas " "not found, automatic saving aborted.").c_str());
+		return;
+	}
+	std::string target_path = save_path + "#" + std::to_string(frame_of_data) + " " + data_direction + "\\";
+	bool flag = CreateDirectory(target_path.c_str(), NULL);
+	if (!flag) {
+		m_bml->SendIngameMessage(("DataUpdater: Failed to create directory " + target_path + ", automatic saving aborted.").c_str());
+	}
+	char buf[128];
+	std::snprintf(buf, sizeof(buf), "%c=%.3f,v%c=%.3f", data_direction.at(1), data_pos, data_direction.at(1), data_vel);
+	std::string data_str(buf);
+	std::string full_target_path = target_path + tas_filename + " " + data_str + ".tas";
+	CopyFile(tas_path.c_str(), full_target_path.c_str(), FALSE);
+	m_bml->SendIngameMessage(("DataUpdater: Saved TAS file to " + target_path).c_str());
+}
+
+void DataUpdater::AutoSaveFile() {
+	if (!autosave_enabled) {
+		return;
+	}
+	SaveFile();
 }
 
 int DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) const {

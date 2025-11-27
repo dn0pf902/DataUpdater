@@ -17,6 +17,9 @@ typedef CKSTRING ICKSTRING;
 #include "physics_RT.h"
 
 #include <memory>
+#include <fstream>
+
+#define BML_TAS_PATH "..\\ModLoader\\TASRecords\\"
 
 extern "C" {
 	__declspec(dllexport) IMod* BMLEntry(IBML* bml);
@@ -34,7 +37,6 @@ class DataUpdater : public IMod {
 		CommandDatupd(DataUpdater* mod) : m_mod(mod) {}
 
 		virtual void Execute(IBML* bml, const std::vector<std::string>& args) override {
-			//m_mod->Execute(args); // 需要调用mod内成员时使用
 			if (args.size() <= 1 || args[1] == "help" || args[1] == "h") {
 				bml->SendIngameMessage("/datupd back/b : recover data to preserved data");
 				bml->SendIngameMessage("/datupd clear/c : clear data");
@@ -115,6 +117,7 @@ private:
 	bool enabled = false;
 	bool update_enabled = false;
 	bool hotkey_enabled = false;
+	bool autosave_enabled = false;
 	CKParameter* m_ActiveBall = nullptr;
 	IProperty* prop_enabled = nullptr;
 	IProperty* prop_update_enabled = nullptr;
@@ -129,6 +132,7 @@ private:
 	IProperty* prop_dlt_vel = nullptr, * prop_dlt_pos = nullptr;
 	IProperty* prop_UI_posx = nullptr, * prop_UI_posy = nullptr, * prop_UI_font = nullptr, * prop_UI_font_size = nullptr;
 	IProperty* prop_UI_sizex = nullptr, * prop_UI_sizey = nullptr;
+	IProperty* prop_autosave_enabled = nullptr, *prop_tas_name = nullptr, *prop_save_path = nullptr;
 	CKKEYBOARD hotkey = {};
 	InputHook* input_manager = nullptr;
 	CKIpionManager* m_IpionManager = nullptr;
@@ -147,6 +151,9 @@ private:
 	std::string preserved_data = "";
 	float data_pos = 0.0f, data_vel = 0.0f;
 	float dlt_pos = 0.1f, dlt_vel = 0.1f;
+
+	std::string tas_filename = "1";
+	std::string save_path = BML_TAS_PATH + std::string("SavedFile\\");
 public:
 	DataUpdater(IBML* bml) : IMod(bml) {}
 
@@ -170,6 +177,7 @@ public:
 	int cmp(int frame, VxVector cur_pos, VxVector cur_vel) const;
 	void update_data(int frame, VxVector cur_pos, VxVector cur_vel);
 	void SaveFile();
+	void AutoSaveFile();
 
 	CK3dEntity* GetActiveBall() const {
 		if (m_ActiveBall)
