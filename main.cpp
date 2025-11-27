@@ -1,6 +1,7 @@
 #include "DataUpdater.h"
 
 #include <BML/Bui.h>
+#include <Windows.h>
 
 IMod* BMLEntry(IBML* bml) {
 	return new DataUpdater(bml);
@@ -17,6 +18,11 @@ void DataUpdater::OnLoad() {
 	enabled = prop_enabled->GetBoolean();
 
 	GetConfig()->SetCategoryComment("Update", "Update settings");
+
+	prop_update_enabled = GetConfig()->GetProperty("Update", "EnableUpdate");
+	prop_update_enabled->SetDefaultBoolean(true);
+	prop_update_enabled->SetComment("Enable updating data");
+	update_enabled = prop_update_enabled->GetBoolean();
 
 	prop_hotkey_enabled = GetConfig()->GetProperty("Update", "EnableHotkey");
 	prop_hotkey_enabled->SetDefaultBoolean(false);
@@ -147,6 +153,7 @@ void DataUpdater::OnLoadScript(const char* filename, CKBehavior* script) {
 }
 
 void DataUpdater::ShowData() {
+	if (!enabled) return;
 	if (!bg) {
 		bg = std::make_unique<decltype(bg)::element_type>("DataBackground");
 		bg->SetSize({ UI_sizex, UI_sizey });
@@ -192,6 +199,12 @@ void DataUpdater::HideData() {
 	}
 }
 
+void DataUpdater::SaveFile() {
+	char* sourcefile = "../fuck.txt";
+	char* targetfile = "../fucker.txt";
+	CopyFile(sourcefile, targetfile, FALSE);
+}
+
 int DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) const {
 	if (frame_of_data == 0) {
 		return 1;
@@ -228,7 +241,7 @@ int DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) const {
 	else {
 		return -1;
 	}
-	if (cur_value > data_value) {
+	if (cur_value > data_value + 0.001f) {
 		return 1;
 	}
 	else if (cur_value > data_value - dlt_pos) {
@@ -257,6 +270,7 @@ int DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) const {
 }
 
 void DataUpdater::update_data(int frame, VxVector cur_pos, VxVector cur_vel) {
+	if (!update_enabled) return;
 	char buf[128];
 	std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_of_data, update_direction.c_str(), data_pos, data_vel);
 	preserved_data = buf;

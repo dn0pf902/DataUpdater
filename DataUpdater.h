@@ -46,9 +46,12 @@ class DataUpdater : public IMod {
 			if (args[1] == "clear" || args[1] == "c") {
 				return m_mod->Execute(args);
 			}
+			if (args[1] == "save" || args[1] == "s") {
+				return m_mod->Execute(args);
+			}
 		}
 		virtual const std::vector<std::string> GetTabCompletion(IBML* bml, const std::vector<std::string>& args) override {
-			return args.size() == 2 ? std::vector<std::string>{"help", "back", "clear" } : std::vector<std::string>{};
+			return args.size() == 2 ? std::vector<std::string>{"help", "back", "clear", "save"} : std::vector<std::string>{};
 		};
 	};
 	void Execute(const std::vector<std::string>& args) {
@@ -84,6 +87,7 @@ class DataUpdater : public IMod {
 			}
 			return;
 		}
+
 		if (args[1] == "clear" || args[1] == "c") {
 			data_direction = "+x";
 			data_pos = 0.0f;
@@ -99,14 +103,21 @@ class DataUpdater : public IMod {
 			sprite_data->SetText(buf);
 			return;
 		}
+
+		if (args[1] == "save" || args[1] == "s") {
+			SaveFile();
+			return;
+		}
 	}
 private:
 	std::unique_ptr<BGui::Panel> bg;
 	std::unique_ptr<BGui::Text> sprite_data, sprite_cur_data;
 	bool enabled = false;
+	bool update_enabled = false;
 	bool hotkey_enabled = false;
 	CKParameter* m_ActiveBall = nullptr;
 	IProperty* prop_enabled = nullptr;
+	IProperty* prop_update_enabled = nullptr;
 	IProperty* prop_hotkey = nullptr;
 	IProperty* prop_hotkey_enabled = nullptr;
 	IProperty* prop_update_frame = nullptr;
@@ -158,6 +169,7 @@ public:
 	void HideData();
 	int cmp(int frame, VxVector cur_pos, VxVector cur_vel) const;
 	void update_data(int frame, VxVector cur_pos, VxVector cur_vel);
+	void SaveFile();
 
 	CK3dEntity* GetActiveBall() const {
 		if (m_ActiveBall)
