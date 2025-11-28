@@ -85,6 +85,23 @@ void DataUpdater::OnLoad() {
 	prop_preserved_data->SetComment("Preserved data string(can be updated back to current best data by using \"/datupd upd p\")");
 	preserved_data = prop_preserved_data->GetString();
 
+	GetConfig()->SetCategoryComment("SaveFile", "File saving settings");
+
+	prop_autosave_enabled = GetConfig()->GetProperty("SaveFile", "EnableAutoSave");
+	prop_autosave_enabled->SetDefaultBoolean(false);
+	prop_autosave_enabled->SetComment("Enable automatic file saving when updating data");
+	autosave_enabled = prop_autosave_enabled->GetBoolean();
+
+	prop_tas_name = GetConfig()->GetProperty("SaveFile", "TASFileName");
+	prop_tas_name->SetDefaultString("1");
+	prop_tas_name->SetComment("TAS file name for automatic saving (without extension)");
+	tas_filename = prop_tas_name->GetString();
+
+	prop_save_path = GetConfig()->GetProperty("SaveFile", "SavePath");
+	prop_save_path->SetDefaultString((BML_TAS_PATH + std::string("SavedFile\\")).c_str());
+	prop_save_path->SetComment("Full path to save TAS files");
+	save_path = prop_save_path->GetString();
+
 	GetConfig()->SetCategoryComment("CompareRule", "Comparison rules for data.(if current_pos>pos or (current_pos>pos-[DeltaPosition] and current_vel>vel+[DeltaVelocity]) then update)");
 
 	prop_dlt_pos = GetConfig()->GetProperty("CompareRule", "DeltaPosition");
@@ -129,33 +146,12 @@ void DataUpdater::OnLoad() {
 	prop_UI_sizey->SetComment("UI Size Y (0.0 - 1.0)");
 	UI_sizey = prop_UI_sizey->GetFloat();
 	
-	GetConfig()->SetCategoryComment("SaveFile", "File saving settings");
-
-	prop_autosave_enabled = GetConfig()->GetProperty("SaveFile", "EnableAutoSave");
-	prop_autosave_enabled->SetDefaultBoolean(false);
-	prop_autosave_enabled->SetComment("Enable automatic file saving when updating data");
-	autosave_enabled = prop_autosave_enabled->GetBoolean();
-
-	prop_tas_name = GetConfig()->GetProperty("SaveFile", "TASFileName");
-	prop_tas_name->SetDefaultString("1");
-	prop_tas_name->SetComment("TAS file name for automatic saving (without extension)");
-	tas_filename = prop_tas_name->GetString();
-
-	prop_save_path = GetConfig()->GetProperty("SaveFile", "SavePath");
-	prop_save_path->SetDefaultString((BML_TAS_PATH + std::string("SavedFile\\")).c_str());
-	prop_save_path->SetComment("Full path to save TAS files");
-	save_path = prop_save_path->GetString();
-	
 	//other initializations
 	input_manager = m_bml->GetInputManager();
 
 	InitPhysicsMethodPointers();
 
 	m_IpionManager = (CKIpionManager*)m_BML->GetCKContext()->GetManagerByGuid(CKGUID(0x6bed328b, 0x141f5148));
-}
-
-void DataUpdater::OnPostLoadLevel() {
-
 }
 
 void DataUpdater::OnStartLevel() {
@@ -323,6 +319,7 @@ int DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) const {
 		}
 		else {
 			data_vel_value = -data_vel;
+			cur_vel_value = -cur_vel_value;
 		}
 		if (cur_vel_value > data_vel_value + dlt_vel) {
 			return 1;
@@ -407,6 +404,7 @@ void DataUpdater::OnProcess() {
 			std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_cnt, update_direction.c_str(), curpos, curvel);
 			sprite_cur_data->SetText(buf);
 			update_data(frame_cnt, pos, vel);
+			AutoSaveFile();
 		}
 		else {
 			sprite_cur_data->SetTextColor(0xffff0000);

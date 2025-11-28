@@ -168,7 +168,6 @@ public:
 	virtual void OnStartLevel() override;
 	virtual void OnProcess() override;
 	virtual void OnLoad() override;
-	virtual void OnPostLoadLevel() override;
 	virtual void OnLoadScript(const char* filename, CKBehavior* script) override;
 	virtual void OnPreLoadLevel() override;
 	virtual void OnPreExitLevel() override;
