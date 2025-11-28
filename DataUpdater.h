@@ -162,7 +162,7 @@ public:
 	virtual ICKSTRING GetVersion() override { return "0.1.0"; }
 	virtual ICKSTRING GetName() override { return "DataUpdater"; }
 	virtual ICKSTRING GetAuthor() override { return "dn0pf902"; }
-	virtual ICKSTRING GetDescription() override { return "1"; }
+	virtual ICKSTRING GetDescription() override { return "An auxiliary mod for TAS making."; }
 	DECLARE_BML_VERSION;
 
 	virtual void OnStartLevel() override;
