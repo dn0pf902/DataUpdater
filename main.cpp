@@ -102,7 +102,22 @@ void DataUpdater::OnLoad() {
 	prop_save_path->SetComment("Full path to save TAS files");
 	save_path = prop_save_path->GetString();
 
-	GetConfig()->SetCategoryComment("CompareRule", "Comparison rules for data.(if current_pos>pos or (current_pos>pos-[DeltaPosition] and current_vel>vel+[DeltaVelocity]) then update)");
+	GetConfig()->SetCategoryComment("CompareRule", "Comparison rules for data. For specific details, please refer to [reference website].");
+
+	prop_enable_upd_lim = GetConfig()->GetProperty("CompareRule", "EnableUpdateLimit");
+	prop_enable_upd_lim->SetDefaultBoolean(true);
+	prop_enable_upd_lim->SetComment("Enable update limit for comparison(default:true)");
+	enable_upd_lim = prop_enable_upd_lim->GetBoolean();
+
+	prop_upd_lim_pos = GetConfig()->GetProperty("CompareRule", "UpdateLimitPosition");
+	prop_upd_lim_pos->SetDefaultFloat(0.1f);
+	prop_upd_lim_pos->SetComment("Update limit for position comparison(default:0.1)");
+	upd_lim_pos = prop_upd_lim_pos->GetFloat();
+
+	prop_upd_lim_vel = GetConfig()->GetProperty("CompareRule", "UpdateLimitVelocity");
+	prop_upd_lim_vel->SetDefaultFloat(1.0f);
+	prop_upd_lim_vel->SetComment("Update limit for velocity comparison(default:1.0)");
+	upd_lim_vel = prop_upd_lim_vel->GetFloat();
 
 	prop_dlt_pos = GetConfig()->GetProperty("CompareRule", "DeltaPosition");
 	prop_dlt_pos->SetDefaultFloat(0.1f);
@@ -270,57 +285,71 @@ int DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) const {
 	if (frame != frame_of_data || update_direction != data_direction) {
 		return -1;
 	}
-	float cur_value = 0.0f;
-	float data_value = 0.0f;
+	float cur_pos_value = 0.0f;
+	float data_pos_value = 0.0f;
 	if (update_direction == "+x") {
-		cur_value = cur_pos.x;
-		data_value = data_pos;
+		cur_pos_value = cur_pos.x;
+		data_pos_value = data_pos;
 	}
 	else if (update_direction == "-x") {
-		cur_value = -cur_pos.x;
-		data_value = -data_pos;
+		cur_pos_value = -cur_pos.x;
+		data_pos_value = -data_pos;
 	}
 	else if (update_direction == "+y") {
-		cur_value = cur_pos.y;
-		data_value = data_pos;
+		cur_pos_value = cur_pos.y;
+		data_pos_value = data_pos;
 	}
 	else if (update_direction == "-y") {
-		cur_value = -cur_pos.y;
-		data_value = -data_pos;
+		cur_pos_value = -cur_pos.y;
+		data_pos_value = -data_pos;
 	}
 	else if (update_direction == "+z") {
-		cur_value = cur_pos.z;
-		data_value = data_pos;
+		cur_pos_value = cur_pos.z;
+		data_pos_value = data_pos;
 	}
 	else if (update_direction == "-z") {
-		cur_value = -cur_pos.z;
-		data_value = -data_pos;
+		cur_pos_value = -cur_pos.z;
+		data_pos_value = -data_pos;
 	}
 	else {
 		return -1;
 	}
-	if (cur_value > data_value + 0.001f) {
-		return 1;
+
+	float cur_vel_value = 0.0f;
+	float data_vel_value = 0.0f;
+	if (update_direction == "+x" || update_direction == "-x") {
+		cur_vel_value = cur_vel.x;
 	}
-	else if (cur_value > data_value - dlt_pos) {
-		float cur_vel_value = 0.0f;
-		float data_vel_value = 0.0f;
-		if (update_direction == "+x" || update_direction == "-x") {
-			cur_vel_value = cur_vel.x;
+	else if (update_direction == "+y" || update_direction == "-y") {
+		cur_vel_value = cur_vel.y;
+	}
+	else if (update_direction == "+z" || update_direction == "-z") {
+		cur_vel_value = cur_vel.z;
+	}
+	if (update_direction == "+x" || update_direction == "+y" || update_direction == "+z") {
+		data_vel_value = data_vel;
+	}
+	else {
+		data_vel_value = -data_vel;
+		cur_vel_value = -cur_vel_value;
+	}
+
+	//update_limit
+	if (enable_upd_lim) {
+		if (cur_pos_value < data_pos_value + upd_lim_pos && cur_vel_value < data_vel_value - upd_lim_vel) {
+			return 0;
 		}
-		else if (update_direction == "+y" || update_direction == "-y") {
-			cur_vel_value = cur_vel.y;
+	}
+	else {
+		if (cur_pos_value > data_pos_value + 0.001f) {
+			return 1;
 		}
-		else if (update_direction == "+z" || update_direction == "-z") {
-			cur_vel_value = cur_vel.z;
-		}
-		if (update_direction == "+x" || update_direction == "+y" || update_direction == "+z") {
-			data_vel_value = data_vel;
-		}
-		else {
-			data_vel_value = -data_vel;
-			cur_vel_value = -cur_vel_value;
-		}
+	}
+
+
+	
+	if (cur_pos_value > data_pos_value - dlt_pos) {
+		
 		if (cur_vel_value > data_vel_value + dlt_vel) {
 			return 1;
 		}
@@ -335,20 +364,20 @@ void DataUpdater::update_data(int frame, VxVector cur_pos, VxVector cur_vel) {
 	preserved_data = buf;
 	prop_preserved_data->SetString(preserved_data.c_str());
 
-	float cur_value = 0.0f;
+	float cur_pos_value = 0.0f;
 	if (update_direction == "+x" || update_direction == "-x") {
-		cur_value = cur_pos.x;
+		cur_pos_value = cur_pos.x;
 	}
 	else if (update_direction == "+y" || update_direction == "-y") {
-		cur_value = cur_pos.y;
+		cur_pos_value = cur_pos.y;
 	}
 	else if (update_direction == "+z" || update_direction == "-z") {
-		cur_value = cur_pos.z;
+		cur_pos_value = cur_pos.z;
 	}
 	else {
 		return;
 	}
-	data_pos = cur_value;
+	data_pos = cur_pos_value;
 	data_vel = 0.0f;
 	if (update_direction == "+x" || update_direction == "-x") {
 		data_vel = cur_vel.x;

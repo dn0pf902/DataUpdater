@@ -34,6 +34,9 @@
     <ClInclude Include="DataUpdater.h" />
     <ClInclude Include="physics_RT.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="comparison rules.txt" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

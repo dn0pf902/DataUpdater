@@ -156,6 +156,7 @@ private:
 	IProperty* prop_frame_of_data = nullptr;
 	IProperty* prop_data_pos = nullptr, * prop_data_vel = nullptr;
 	IProperty* prop_preserved_data = nullptr;
+	IProperty* prop_enable_upd_lim = nullptr, * prop_upd_lim_pos = nullptr, * prop_upd_lim_vel = nullptr;
 	IProperty* prop_dlt_vel = nullptr, * prop_dlt_pos = nullptr;
 	IProperty* prop_UI_posx = nullptr, * prop_UI_posy = nullptr, * prop_UI_font = nullptr, * prop_UI_font_size = nullptr;
 	IProperty* prop_UI_sizex = nullptr, * prop_UI_sizey = nullptr;
@@ -179,6 +180,10 @@ private:
 	float data_pos = 0.0f, data_vel = 0.0f;
 	float saved_cur_pos = 0.0f, saved_cur_vel = 0.0f;
 	int saved_cur_frame = 0;
+
+	// Comparison rules
+	bool enable_upd_lim = true;
+	float upd_lim_pos = 0.1f, upd_lim_vel = 1.0f;
 	float dlt_pos = 0.1f, dlt_vel = 0.1f;
 
 	std::string tas_filename = "1";
