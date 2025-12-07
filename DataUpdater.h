@@ -52,9 +52,12 @@ class DataUpdater : public IMod {
 			if (args[1] == "save" || args[1] == "s") {
 				return m_mod->Execute(args);
 			}
+			if (args[1] == "update" || args[1] == "u") {
+				return m_mod->Execute(args);
+			}
 		}
 		virtual const std::vector<std::string> GetTabCompletion(IBML* bml, const std::vector<std::string>& args) override {
-			return args.size() == 2 ? std::vector<std::string>{"help", "back", "clear", "save"} : std::vector<std::string>{};
+			return args.size() == 2 ? std::vector<std::string>{"help", "back", "clear", "save", "update"} : std::vector<std::string>{};
 		};
 	};
 	void Execute(const std::vector<std::string>& args) {
@@ -111,6 +114,29 @@ class DataUpdater : public IMod {
 			SaveFile();
 			return;
 		}
+
+		if (args[1] == "update" || args[1] == "u") {
+			sprite_cur_data->SetTextColor(0xff00ff00);
+			char buf[128];
+			std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_cnt, update_direction.c_str(), saved_cur_pos, saved_cur_vel);
+			sprite_cur_data->SetText(buf);
+
+			std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_of_data, update_direction.c_str(), data_pos, data_vel);
+			preserved_data = buf;
+			prop_preserved_data->SetString(preserved_data.c_str());
+
+			frame_of_data = saved_cur_frame;
+			data_pos = saved_cur_pos;
+			data_vel = saved_cur_vel;
+			data_direction = update_direction;
+			prop_frame_of_data->SetInteger(frame_of_data);
+			prop_data_pos->SetFloat(data_pos);
+			prop_data_vel->SetFloat(data_vel);
+			prop_data_direction->SetString(data_direction.c_str());
+
+			AutoSaveFile();
+			return;
+		}
 	}
 private:
 	std::unique_ptr<BGui::Panel> bg;
@@ -151,6 +177,8 @@ private:
 	std::string data_direction = "";
 	std::string preserved_data = "";
 	float data_pos = 0.0f, data_vel = 0.0f;
+	float saved_cur_pos = 0.0f, saved_cur_vel = 0.0f;
+	int saved_cur_frame = 0;
 	float dlt_pos = 0.1f, dlt_vel = 0.1f;
 
 	std::string tas_filename = "1";
@@ -159,7 +187,7 @@ public:
 	DataUpdater(IBML* bml) : IMod(bml) {}
 
 	virtual ICKSTRING GetID() override { return "DataUpdater"; }
-	virtual ICKSTRING GetVersion() override { return "0.1.0"; }//
+	virtual ICKSTRING GetVersion() override { return "0.1.1"; }
 	virtual ICKSTRING GetName() override { return "DataUpdater"; }
 	virtual ICKSTRING GetAuthor() override { return "dn0pf902"; }
 	virtual ICKSTRING GetDescription() override { return "An auxiliary mod for TAS making."; }

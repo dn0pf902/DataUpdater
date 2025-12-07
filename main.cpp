@@ -389,6 +389,9 @@ void DataUpdater::OnProcess() {
 			curpos = pos.z;
 			curvel = vel.z;
 		}
+		saved_cur_pos = curpos;
+		saved_cur_vel = curvel;
+		saved_cur_frame = frame_cnt;
 		
 		auto result = cmp(frame_cnt, pos, vel);
 		if (result == -1) {
