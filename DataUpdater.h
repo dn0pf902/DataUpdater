@@ -118,7 +118,7 @@ class DataUpdater : public IMod {
 		if (args[1] == "update" || args[1] == "u") {
 			sprite_cur_data->SetTextColor(0xff00ff00);
 			char buf[128];
-			std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_cnt, update_direction.c_str(), saved_cur_pos, saved_cur_vel);
+			std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", saved_cur_frame, update_direction.c_str(), saved_cur_pos, saved_cur_vel);
 			sprite_cur_data->SetText(buf);
 
 			std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_of_data, update_direction.c_str(), data_pos, data_vel);
