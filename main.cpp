@@ -7,6 +7,34 @@ IMod* BMLEntry(IBML* bml) {
 	return new DataUpdater(bml);
 }
 
+void DataUpdater::GetUpdateRuleList() {
+	memset(allowed_rules, false, sizeof(allowed_rules));
+	size_t start = 0;
+	size_t end = upd_rule_list.find(',');
+	while (end != std::string::npos) {
+		std::string rule = upd_rule_list.substr(start, end - start);
+		int r = std::stoi(rule);
+		if (r >= 1 && r <= 5) {
+			allowed_rules[r] = true;
+		}
+		start = end + 1;
+		end = upd_rule_list.find(',', start);
+	}
+	std::string rule = upd_rule_list.substr(start);
+	int r = std::stoi(rule);
+	if (r >= 1 && r <= 5) {
+		allowed_rules[r] = true;
+	}
+
+	for (int i = 1; i <= 5; i++) {
+		if (allowed_rules[i]) {
+			char buf[128];
+			std::snprintf(buf, sizeof(buf), "DataUpdater: Enable update rule %d.", i);
+			m_bml->SendIngameMessage(buf);
+		}
+	}
+}
+
 void DataUpdater::OnLoad() {
 	m_bml->RegisterCommand(new CommandDatupd(this));
 
@@ -119,15 +147,27 @@ void DataUpdater::OnLoad() {
 	prop_upd_lim_vel->SetComment("Update limit for velocity comparison(default:1.0)");
 	upd_lim_vel = prop_upd_lim_vel->GetFloat();
 
-	prop_dlt_pos = GetConfig()->GetProperty("CompareRule", "DeltaPosition");
-	prop_dlt_pos->SetDefaultFloat(0.1f);
-	prop_dlt_pos->SetComment("Allowed delta for position comparison(default:0.1)");
-	dlt_pos = prop_dlt_pos->GetFloat();
+	prop_upd_rule_list = GetConfig()->GetProperty("CompareRule", "UpdateRuleList");
+	prop_upd_rule_list->SetDefaultString("1");
+	prop_upd_rule_list->SetComment("List of update rules to use, separated by commas(e.g., \"1,2,4\")");
+	upd_rule_list = prop_upd_rule_list->GetString();
+	if (upd_rule_list.empty()) {
+		upd_rule_list = "1";
+		prop_upd_rule_list->SetString(upd_rule_list.c_str());
+	}
+	GetUpdateRuleList();
 
-	prop_dlt_vel = GetConfig()->GetProperty("CompareRule", "DeltaVelocity");
-	prop_dlt_vel->SetDefaultFloat(1.0f);
-	prop_dlt_vel->SetComment("Allowed delta for velocity comparison(default:1.0)");
-	dlt_vel = prop_dlt_vel->GetFloat();
+	for (int i = 1;i <= 5;i++) {
+		prop_dlt_pos[i] = GetConfig()->GetProperty("CompareRule", ("DeltaPosition" + std::to_string(i)).c_str());
+		prop_dlt_pos[i]->SetDefaultFloat(0.1f);
+		prop_dlt_pos[i]->SetComment(("Allowed delta for position comparison(default:0.1)" + std::string("Rule ") + std::to_string(i)).c_str());
+		dlt_pos[i] = prop_dlt_pos[i]->GetFloat();
+
+		prop_dlt_vel[i] = GetConfig()->GetProperty("CompareRule", ("DeltaVelocity" + std::to_string(i)).c_str());
+		prop_dlt_vel[i]->SetDefaultFloat(1.0f);
+		prop_dlt_vel[i]->SetComment(("Allowed delta for velocity comparison(default:1.0)" + std::string("Rule ") + std::to_string(i)).c_str());
+		dlt_vel[i] = prop_dlt_vel[i]->GetFloat();
+	}
 
 	GetConfig()->SetCategoryComment("UI", "UI Settings");
 	
@@ -340,17 +380,14 @@ int DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) const {
 			return 0;
 		}
 	}
-	else {
-		if (cur_pos_value > data_pos_value + 0.001f) {
-			return 1;
-		}
+
+	if (cur_pos_value > data_pos_value + 0.001f) {
+		return 1;
 	}
-
-
 	
-	if (cur_pos_value > data_pos_value - dlt_pos) {
-		
-		if (cur_vel_value > data_vel_value + dlt_vel) {
+	for (int i = 1; i <= 5; i++) {
+		if (!allowed_rules[i]) continue;
+		if (cur_pos_value > data_pos_value - dlt_pos[i] && cur_vel_value > data_vel_value + dlt_vel[i]) {
 			return 1;
 		}
 	}
