@@ -35,7 +35,7 @@
     <ClInclude Include="physics_RT.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="comparison rules.txt" />
+    <Text Include="comparison_rules.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

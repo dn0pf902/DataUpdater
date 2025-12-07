@@ -31,6 +31,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="comparison rules.txt" />
+    <Text Include="comparison_rules.txt" />
   </ItemGroup>
 </Project>
