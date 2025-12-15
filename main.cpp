@@ -170,7 +170,7 @@ void DataUpdater::OnLoad() {
 	}
 
 	GetConfig()->SetCategoryComment("UI", "UI Settings");
-	
+
 	prop_UI_posx = GetConfig()->GetProperty("UI", "UIPosX");
 	prop_UI_posx->SetDefaultFloat(0.6f);
 	prop_UI_posx->SetComment("UI Position X (0.0 - 1.0)");
@@ -200,7 +200,7 @@ void DataUpdater::OnLoad() {
 	prop_UI_sizey->SetDefaultFloat(0.06f);
 	prop_UI_sizey->SetComment("UI Size Y (0.0 - 1.0)");
 	UI_sizey = prop_UI_sizey->GetFloat();
-	
+
 	//other initializations
 	input_manager = m_bml->GetInputManager();
 
@@ -234,19 +234,6 @@ void DataUpdater::OnLoadScript(const char* filename, CKBehavior* script) {
 	}
 }
 
-void DataUpdater::UpdateSpriteDataDisplay(int frame, const std::string& dir, float pos, float vel) {
-	// 格式化文本并分配给三个控件
-	char buf[128];
-	std::snprintf(buf, sizeof(buf), "#%d:%s", frame, dir.c_str());
-	if (sprite_data_prefix) sprite_data_prefix->SetText(buf);
-
-	std::snprintf(buf, sizeof(buf), "pos=%.3f", pos);
-	if (sprite_data_pos) sprite_data_pos->SetText(buf);
-
-	std::snprintf(buf, sizeof(buf), "vel=%.3f", vel);
-	if (sprite_data_vel) sprite_data_vel->SetText(buf);
-}
-
 void DataUpdater::ShowData() {
 	if (!enabled) return;
 	if (!bg) {
@@ -257,59 +244,41 @@ void DataUpdater::ShowData() {
 		bg->SetColor({ 0, 0, 0, 175 });
 	}
 
-	// 创建/初始化三段文本控件（只在第一次创建）
-	if (!sprite_data_prefix) {
-		sprite_data_prefix = std::make_unique<decltype(sprite_data_prefix)::element_type>("DataPrefix");
-		sprite_data_prefix->SetSize({ UI_sizex * 0.4f, UI_sizey });
-		// 以左对齐开始于 panel 左侧
-		sprite_data_prefix->SetAlignment(CKSPRITETEXT_LEFT);
-		sprite_data_prefix->SetPosition({ UI_posx - UI_sizex / 2.0f, UI_posy });
-		sprite_data_prefix->SetTextColor(0xffffffff);
-		sprite_data_prefix->SetZOrder(128);
-		sprite_data_prefix->SetFont(UI_font.c_str(), UI_font_size, 400, false, false);
-	}
+	if (!sprite_data) {
+		sprite_data = std::make_unique<decltype(sprite_data)::element_type>("DataDisplay");
+		sprite_data->SetSize({ UI_sizex, UI_sizey });
+		sprite_data->SetPosition({ UI_posx, UI_posy });
+		sprite_data->SetAlignment(CKSPRITETEXT_CENTER);
+		sprite_data->SetTextColor(0xffffffff);
+		sprite_data->SetZOrder(128);
+		sprite_data->SetFont(UI_font.c_str(), UI_font_size, 400, false, false);
 
-	if (!sprite_data_pos) {
-		sprite_data_pos = std::make_unique<decltype(sprite_data_pos)::element_type>("DataPos");
-		sprite_data_pos->SetSize({ UI_sizex * 0.3f, UI_sizey });
-		sprite_data_pos->SetAlignment(CKSPRITETEXT_LEFT);
-		// 放在 prefix 右侧一点
-		sprite_data_pos->SetPosition({ UI_posx - UI_sizex / 2.0f + UI_sizex * 0.42f, UI_posy });
-		// 示例颜色：pos 使用黄色（ARGB）
-		sprite_data_pos->SetTextColor(0xffffff00);
-		sprite_data_pos->SetZOrder(128);
-		sprite_data_pos->SetFont(UI_font.c_str(), UI_font_size, 400, false, false);
-	}
-
-	if (!sprite_data_vel) {
-		sprite_data_vel = std::make_unique<decltype(sprite_data_vel)::element_type>("DataVel");
-		sprite_data_vel->SetSize({ UI_sizex * 0.28f, UI_sizey });
-		sprite_data_vel->SetAlignment(CKSPRITETEXT_LEFT);
-		sprite_data_vel->SetPosition({ UI_posx - UI_sizex / 2.0f + UI_sizex * 0.72f, UI_posy });
-		sprite_data_vel->SetTextColor(0xff00ff00);
-		sprite_data_vel->SetZOrder(128);
-		sprite_data_vel->SetFont(UI_font.c_str(), UI_font_size, 400, false, false);
+		char buf[128];
+		std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_of_data, update_direction.c_str(), data_pos, data_vel);
+		sprite_data->SetText(buf);
 	}
 
 	if (!sprite_cur_data) {
 		sprite_cur_data = std::make_unique<decltype(sprite_cur_data)::element_type>("CurrentDataDisplay");
 		sprite_cur_data->SetSize({ UI_sizex, UI_sizey });
-		sprite_cur_data->SetPosition({ UI_posx, UI_posy + ITEM_Y_SHIFT });
+		sprite_cur_data->SetPosition({ UI_posx, UI_posy + ITEM_Y_SHIFT / 18 * UI_font_size });
 		sprite_cur_data->SetAlignment(CKSPRITETEXT_CENTER);
 		sprite_cur_data->SetTextColor(0xffffffff);
 		sprite_cur_data->SetZOrder(128);
 		sprite_cur_data->SetFont(UI_font.c_str(), UI_font_size, 400, false, false);
 	}
-
-	UpdateSpriteDataDisplay(frame_of_data, update_direction, data_pos, data_vel);
 }
 
 void DataUpdater::HideData() {
-	if (bg) bg.reset();
-	if (sprite_data_prefix) sprite_data_prefix.reset();
-	if (sprite_data_pos) sprite_data_pos.reset();
-	if (sprite_data_vel) sprite_data_vel.reset();
-	if (sprite_cur_data) sprite_cur_data.reset();
+	if (bg) {
+		bg.reset();
+	}
+	if (sprite_data) {
+		sprite_data.reset();
+	}
+	if (sprite_cur_data) {
+		sprite_cur_data.reset();
+	}
 }
 
 void DataUpdater::SaveFile() {
@@ -415,7 +384,7 @@ int DataUpdater::cmp(int frame, VxVector cur_pos, VxVector cur_vel) const {
 	if (cur_pos_value > data_pos_value + 0.001f) {
 		return 1;
 	}
-	
+
 	for (int i = 1; i <= 5; i++) {
 		if (!allowed_rules[i]) continue;
 		if (cur_pos_value > data_pos_value - dlt_pos[i] && cur_vel_value > data_vel_value + dlt_vel[i]) {
@@ -472,7 +441,7 @@ void DataUpdater::OnProcess() {
 	if ((hotkey_enabled && input_manager->IsKeyPressed(hotkey)) || (update_frame != 0 && frame_cnt == update_frame)) {
 		auto pos = get_ball_pos();
 		auto vel = get_ball_vel();
-		
+
 		float curpos = 0.0f, curvel = 0.0f;
 		if (update_direction == "+x" || update_direction == "-x") {
 			curpos = pos.x;
@@ -489,7 +458,7 @@ void DataUpdater::OnProcess() {
 		saved_cur_pos = curpos;
 		saved_cur_vel = curvel;
 		saved_cur_frame = frame_cnt;
-		
+
 		auto result = cmp(frame_cnt, pos, vel);
 		if (result == -1) {
 			sprite_cur_data->SetTextColor(0xffffff00);

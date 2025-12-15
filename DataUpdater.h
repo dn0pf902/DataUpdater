@@ -160,8 +160,7 @@ private:
 	IProperty* prop_data_pos = nullptr, * prop_data_vel = nullptr;
 	IProperty* prop_preserved_data = nullptr;
 	IProperty* prop_enable_upd_lim = nullptr, * prop_upd_lim_pos = nullptr, * prop_upd_lim_vel = nullptr;
-	IProperty* prop_upd_rule_list = nullptr;
-	IProperty* prop_dlt_vel[6] = { nullptr }, * prop_dlt_pos[6] = { nullptr };
+	IProperty* prop_dlt_vel = nullptr, * prop_dlt_pos = nullptr;
 	IProperty* prop_UI_posx = nullptr, * prop_UI_posy = nullptr, * prop_UI_font = nullptr, * prop_UI_font_size = nullptr;
 	IProperty* prop_UI_sizex = nullptr, * prop_UI_sizey = nullptr;
 	IProperty* prop_autosave_enabled = nullptr, *prop_tas_name = nullptr, *prop_save_path = nullptr;
@@ -188,9 +187,7 @@ private:
 	// Comparison rules
 	bool enable_upd_lim = true;
 	float upd_lim_pos = 0.1f, upd_lim_vel = 1.0f;
-	float dlt_pos[6] = { 0.0f }, dlt_vel[6] = {0.0f};
-	std::string upd_rule_list = "1";
-	bool allowed_rules[6] = { false };
+	float dlt_pos = 0.1f, dlt_vel = 0.1f;
 
 	std::string tas_filename = "1";
 	std::string save_path = BML_TAS_PATH + std::string("SavedFile\\");
@@ -211,7 +208,6 @@ public:
 	virtual void OnPreLoadLevel() override;
 	virtual void OnPreExitLevel() override;
 	
-	void UpdateSpriteDataDisplay(int frame, const std::string& dir, float pos, float vel);
 	void GetUpdateRuleList();
 	void ShowData();
 	void HideData();
