@@ -195,7 +195,7 @@ public:
 	DataUpdater(IBML* bml) : IMod(bml) {}
 
 	virtual ICKSTRING GetID() override { return "DataUpdater"; }
-	virtual ICKSTRING GetVersion() override { return "0.1.1"; }
+	virtual ICKSTRING GetVersion() override { return "0.1.2"; }
 	virtual ICKSTRING GetName() override { return "DataUpdater"; }
 	virtual ICKSTRING GetAuthor() override { return "dn0pf902"; }
 	virtual ICKSTRING GetDescription() override { return "An auxiliary mod for TAS making."; }
