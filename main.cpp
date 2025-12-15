@@ -294,7 +294,7 @@ void DataUpdater::ShowData() {
 	if (!sprite_cur_data) {
 		sprite_cur_data = std::make_unique<decltype(sprite_cur_data)::element_type>("CurrentDataDisplay");
 		sprite_cur_data->SetSize({ UI_sizex, UI_sizey });
-		sprite_cur_data->SetPosition({ UI_posx, UI_posy + ITEM_Y_SHIFT / 18 * UI_font_size });
+		sprite_cur_data->SetPosition({ UI_posx, UI_posy + ITEM_Y_SHIFT });
 		sprite_cur_data->SetAlignment(CKSPRITETEXT_CENTER);
 		sprite_cur_data->SetTextColor(0xffffffff);
 		sprite_cur_data->SetZOrder(128);
