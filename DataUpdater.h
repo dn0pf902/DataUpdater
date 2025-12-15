@@ -140,7 +140,10 @@ class DataUpdater : public IMod {
 	}
 private:
 	std::unique_ptr<BGui::Panel> bg;
-	std::unique_ptr<BGui::Text> sprite_data, sprite_cur_data;
+	std::unique_ptr<BGui::Text> sprite_data_prefix;
+	std::unique_ptr<BGui::Text> sprite_data_pos;
+	std::unique_ptr<BGui::Text> sprite_data_vel;
+	std::unique_ptr<BGui::Text> sprite_cur_data;
 	bool enabled = false;
 	bool update_enabled = false;
 	bool hotkey_enabled = false;
@@ -208,6 +211,7 @@ public:
 	virtual void OnPreLoadLevel() override;
 	virtual void OnPreExitLevel() override;
 	
+	void UpdateSpriteDataDisplay(int frame, const std::string& dir, float pos, float vel);
 	void GetUpdateRuleList();
 	void ShowData();
 	void HideData();
