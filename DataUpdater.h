@@ -162,6 +162,9 @@ private:
 	IProperty* prop_UI_posx = nullptr, * prop_UI_posy = nullptr, * prop_UI_font = nullptr, * prop_UI_font_size = nullptr;
 	IProperty* prop_UI_sizex = nullptr, * prop_UI_sizey = nullptr;
 	IProperty* prop_autosave_enabled = nullptr, * prop_tas_name = nullptr, * prop_save_path = nullptr;
+	IProperty* prop_enable_updlimit_x = nullptr, * prop_enable_updlimit_y = nullptr, * prop_enable_updlimit_z = nullptr;
+	IProperty* prop_updlimit_string_x = nullptr, * prop_updlimit_string_y = nullptr, * prop_updlimit_string_z = nullptr;
+
 	CKKEYBOARD hotkey = {};
 	InputHook* input_manager = nullptr;
 	CKIpionManager* m_IpionManager = nullptr;
@@ -189,6 +192,13 @@ private:
 	std::string upd_rule_list = "1";
 	bool allowed_rules[6] = { false };
 
+	//update restrictions
+	bool enable_updlimit_x = false, enable_updlimit_y = false, enable_updlimit_z = false;
+	float updlimit_up_x = 0.0f, updlimit_down_x = 0.0f;
+	float updlimit_up_y = 0.0f, updlimit_down_y = 0.0f;
+	float updlimit_up_z = 0.0f, updlimit_down_z = 0.0f;
+	std::string updlimit_string_x = "", updlimit_string_y = "", updlimit_string_z = "";
+
 	std::string tas_filename = "1";
 	std::string save_path = BML_TAS_PATH + std::string("SavedFile\\");
 public:
@@ -209,9 +219,11 @@ public:
 	virtual void OnPreExitLevel() override;
 
 	void GetUpdateRuleList();
+	void GetUpdateLimit();
 	void ShowData();
 	void HideData();
 	int cmp(int frame, VxVector cur_pos, VxVector cur_vel) const;
+	bool CheckUpdlimit(VxVector cur_pos);
 	void update_data(int frame, VxVector cur_pos, VxVector cur_vel);
 	void SaveFile();
 	void AutoSaveFile();

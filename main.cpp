@@ -35,6 +35,78 @@ void DataUpdater::GetUpdateRuleList() {
 	}
 }
 
+const float FLT_MN = -1e6;
+const float FLT_MX = 1e6;
+void DataUpdater::GetUpdateLimit() {
+	auto pos = updlimit_string_x.find('~');
+	if (pos != std::string::npos) {
+		std::string down_str = updlimit_string_x.substr(0, pos);
+		std::string up_str = updlimit_string_x.substr(pos + 1);
+		if (!up_str.empty()) {
+			updlimit_up_x = std::stof(up_str);
+		}else {
+			updlimit_up_x = FLT_MX;
+		}
+		if (!down_str.empty()) {
+			updlimit_down_x = std::stof(down_str);
+		}
+		else {
+			updlimit_down_x = FLT_MN;
+		}
+	}else {
+		updlimit_up_x = FLT_MX;
+		updlimit_down_x = FLT_MN;
+	}
+
+	pos = updlimit_string_y.find('~');
+	if (pos != std::string::npos) {
+		std::string down_str = updlimit_string_y.substr(0, pos);
+		std::string up_str = updlimit_string_y.substr(pos + 1);
+		if (!up_str.empty()) {
+			updlimit_up_y = std::stof(up_str);
+		}
+		else {
+			updlimit_up_y = FLT_MX;
+		}
+		if (!down_str.empty()) {
+			updlimit_down_y = std::stof(down_str);
+		}
+		else {
+			updlimit_down_y = FLT_MN;
+		}
+	}
+	else {
+		updlimit_up_y = FLT_MX;
+		updlimit_down_y = FLT_MN;
+	}
+
+	pos = updlimit_string_z.find('~');
+	if (pos != std::string::npos) {
+		std::string down_str = updlimit_string_z.substr(0, pos);
+		std::string up_str = updlimit_string_z.substr(pos + 1);
+		if (!up_str.empty()) {
+			updlimit_up_z = std::stof(up_str);
+		}
+		else {
+			updlimit_up_z = FLT_MX;
+		}
+		if (!down_str.empty()) {
+			updlimit_down_z = std::stof(down_str);
+		}
+		else {
+			updlimit_down_z = FLT_MN;
+		}
+	}
+	else {
+		updlimit_up_z = FLT_MX;
+		updlimit_down_z = FLT_MN;
+	}
+
+	/*char buf[2560];
+	std::snprintf(buf, sizeof(buf), "DataUpdater: Update limit x: %.3f ~ %.3f, y: %.3f ~ %.3f, z: %.3f ~ %.3f", updlimit_down_x, updlimit_up_x, updlimit_down_y, updlimit_up_y, updlimit_down_z, updlimit_up_z);
+	m_bml->SendIngameMessage(buf);*/
+}
+
 void DataUpdater::OnLoad() {
 	m_bml->RegisterCommand(new CommandDatupd(this));
 
@@ -110,7 +182,7 @@ void DataUpdater::OnLoad() {
 
 	prop_preserved_data = GetConfig()->GetProperty("Data", "PreservedData");
 	prop_preserved_data->SetDefaultString("#0:+x,pos=0.000,vel=0.000");
-	prop_preserved_data->SetComment("Preserved data string(can be updated back to current best data by using \"/datupd upd p\")");
+	prop_preserved_data->SetComment("Preserved data string(can be updated back to current best data by using \"/datupd b\")");
 	preserved_data = prop_preserved_data->GetString();
 
 	GetConfig()->SetCategoryComment("SaveFile", "File saving settings");
@@ -200,6 +272,41 @@ void DataUpdater::OnLoad() {
 	prop_UI_sizey->SetDefaultFloat(0.06f);
 	prop_UI_sizey->SetComment("UI Size Y (0.0 - 1.0)");
 	UI_sizey = prop_UI_sizey->GetFloat();
+
+	GetConfig()->SetCategoryComment("UpdateRestrictions", "Set restrictions for legal updates");
+
+	prop_enable_updlimit_x = GetConfig()->GetProperty("UpdateRestrictions", "EnableX");
+	prop_enable_updlimit_x->SetDefaultBoolean(false);
+	prop_enable_updlimit_x->SetComment("Enable x-coordinate restrictions for updates (default: false)");
+	enable_updlimit_x = prop_enable_updlimit_x->GetBoolean();
+
+	prop_updlimit_string_x = GetConfig()->GetProperty("UpdateRestrictions", "XLimit");
+	prop_updlimit_string_x->SetDefaultString("~");
+	prop_updlimit_string_x->SetComment("X-coordinate restriction");
+	updlimit_string_x = prop_updlimit_string_x->GetString();
+	
+	prop_enable_updlimit_y = GetConfig()->GetProperty("UpdateRestrictions", "EnableY");
+	prop_enable_updlimit_y->SetDefaultBoolean(false);
+	prop_enable_updlimit_y->SetComment("Enable y-coordinate restrictions for updates (default: false)");
+	enable_updlimit_y = prop_enable_updlimit_y->GetBoolean();
+
+	prop_updlimit_string_y = GetConfig()->GetProperty("UpdateRestrictions", "YLimit");
+	prop_updlimit_string_y->SetDefaultString("~");
+	prop_updlimit_string_y->SetComment("Y-coordinate restriction");
+	updlimit_string_y = prop_updlimit_string_y->GetString();
+
+	prop_enable_updlimit_z = GetConfig()->GetProperty("UpdateRestrictions", "EnableZ");
+	prop_enable_updlimit_z->SetDefaultBoolean(false);
+	prop_enable_updlimit_z->SetComment("Enable z-coordinate restrictions for updates (default: false)");
+	enable_updlimit_z = prop_enable_updlimit_z->GetBoolean();
+
+	prop_updlimit_string_z = GetConfig()->GetProperty("UpdateRestrictions", "ZLimit");
+	prop_updlimit_string_z->SetDefaultString("~");
+	prop_updlimit_string_z->SetComment("Z-coordinate restriction");
+	updlimit_string_z = prop_updlimit_string_z->GetString();
+
+	GetUpdateLimit();
+
 
 	//other initializations
 	input_manager = m_bml->GetInputManager();
@@ -433,6 +540,25 @@ void DataUpdater::update_data(int frame, VxVector cur_pos, VxVector cur_vel) {
 	prop_data_direction->SetString(data_direction.c_str());
 }
 
+bool DataUpdater::CheckUpdlimit(VxVector cur_pos) {
+	if (enable_updlimit_x) {
+		if (cur_pos.x < updlimit_down_x || cur_pos.x > updlimit_up_x) {
+			return false;
+		}
+	}
+	if (enable_updlimit_y) {
+		if (cur_pos.y < updlimit_down_y || cur_pos.y > updlimit_up_y) {
+			return false;
+		}
+	}
+	if (enable_updlimit_z) {
+		if (cur_pos.z < updlimit_down_z || cur_pos.z > updlimit_up_z) {
+			return false;
+		}
+	}
+	return true;
+}
+
 void DataUpdater::OnProcess() {
 	if (!enabled) return;
 
@@ -468,12 +594,19 @@ void DataUpdater::OnProcess() {
 			m_bml->SendIngameMessage("DataUpdater: Frame or Direction mismatch, cannot update data. Use /datupd clear to clear stored data.");
 		}
 		else if (result == 1) {
-			sprite_cur_data->SetTextColor(0xff00ff00);
-			char buf[128];
-			std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_cnt, update_direction.c_str(), curpos, curvel);
-			sprite_cur_data->SetText(buf);
-			update_data(frame_cnt, pos, vel);
-			AutoSaveFile();
+			if (CheckUpdlimit(pos)) {
+				sprite_cur_data->SetTextColor(0xff00ff00);
+				char buf[128];
+				std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_cnt, update_direction.c_str(), curpos, curvel);
+				sprite_cur_data->SetText(buf);
+				update_data(frame_cnt, pos, vel);
+				AutoSaveFile();
+			}else {
+				sprite_cur_data->SetTextColor(0xffffa500);
+				char buf[128];
+				std::snprintf(buf, sizeof(buf), "#%d:%s,pos=%.3f,vel=%.3f", frame_cnt, update_direction.c_str(), curpos, curvel);
+				sprite_cur_data->SetText(buf);
+			}
 		}
 		else {
 			sprite_cur_data->SetTextColor(0xffff0000);
